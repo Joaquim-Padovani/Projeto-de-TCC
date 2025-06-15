@@ -1,0 +1,59 @@
+import cv2
+import easyocr
+import matplotlib.pyplot as plt
+
+def reconhecer_placa_webcam() -> None:
+    """
+    Função para reconhecer texto (placa veicular) usando EasyOCR a partir da webcam.
+    """
+    # Inicializa o leitor EasyOCR para português
+    reader = easyocr.Reader(['pt'])
+
+    # Captura de vídeo da webcam
+    cap = cv2.VideoCapture(0)  # 0 geralmente é a webcam padrão
+
+    if not cap.isOpened():
+        print("Erro ao acessar a webcam.")
+        return
+
+    print("Pressione 'q' para sair.")
+
+    while True:
+        # Captura frame a frame
+        ret, frame = cap.read()
+        if not ret:
+            print("Erro ao capturar imagem da webcam.")
+            break
+
+        # Detecta e reconhece o texto
+        results = reader.readtext(frame)
+
+        # Itera sobre cada resultado e desenha retângulo + imprime texto
+        for (bbox, text, prob) in results:
+            (top_left, top_right, bottom_right, bottom_left) = bbox
+            top_left = tuple(map(int, top_left))
+            bottom_right = tuple(map(int, bottom_right))
+            
+            # Desenha retângulo ao redor do texto detectado
+            cv2.rectangle(frame, top_left, bottom_right, (0, 255, 0), 2)
+            cv2.putText(frame, text, (top_left[0], top_left[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        # Converte a imagem de BGR para RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Exibe a imagem usando matplotlib
+        plt.imshow(frame_rgb)
+        plt.axis('off')  # Desliga os eixos
+        plt.show(block=False)  # Não bloqueia a execução
+        plt.pause(0.001)  # Pausa para permitir a atualização da imagem
+
+        # Sai do loop se a tecla 'q' for pressionada
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Libera a captura e fecha as janelas
+    cap.release()
+    plt.close()  # Fecha a janela do matplotlib
+
+if __name__ == "__main__":
+    reconhecer_placa_webcam()
